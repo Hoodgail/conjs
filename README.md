@@ -23,3 +23,4 @@ for (msg of test.messages) {
 }
 con.err("This is an error message"); // for errors
 ```
+![Preview](https://cdn.discordapp.com/attachments/697347914061709393/710677729359429642/unknown.png)
