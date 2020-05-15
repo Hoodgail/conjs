@@ -13,14 +13,39 @@ const test = {
     },
   ],
 };
-con.theme("default"); // the only one (For now)
+con.theme("default");
 con.appendTo(document.body);
 con.config({
-  input: true, // the con input where u type ur code
+  input: true,
 });
 for (msg of test.messages) {
   con.log(msg);
 }
-con.err("This is an error message"); // for errors
+con.err("This is an error message");
+con.addBtn("button", function (data) {
+  con.log("btn clicked", data.time);
+});
+con.others.loadJS([
+    "https://code.jquery.com/jquery-3.5.1.min.js",
+    "https://threejs.org/build/three.min.js",
+  ],
+  function () {
+    if (THREE && $) {
+      con.log(con.col("Jquery and Threejs is loaded", "lightgreen"));
+    } else {
+      con.log(con.col(" there was an error Jquery and Threejs", "red"));
+    }
+  }
+);
+setTimeout(function () {
+  con.log(con.col("this is a timeout [1sec]", "purple"));
+}, 1000);
+con.log("1.5 = " + con.others.sec(1.5));
+con.addInput("input", function (data) {
+  if (data.value) {
+    con.log(data.value);
+    data.input.value = "";
+  }
+});
 ```
-![Preview](https://cdn.discordapp.com/attachments/697347914061709393/710677729359429642/unknown.png)
+![Preview](https://cdn.discordapp.com/attachments/653476702860607498/710984801632387162/unknown.png)
