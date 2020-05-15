@@ -13,7 +13,7 @@ const test = {
     },
   ],
 };
-con.theme("default");
+con.theme("default"); // the only one (For now)
 con.appendTo(document.body);
 con.config({
   input: true, // the con input where u type ur code
