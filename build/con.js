@@ -1,16 +1,20 @@
 (function () {
   window.con = {};
+  con.socketUrl = "";
   con.json = {};
   con.others = {};
   con.style = {};
+  con.style.border = "solid 1px #ffffff61";
   con.style.button = `background: #0000004a;
-    padding: 9px;
-    color: white;
-    font-size: 10px;
-    border-radius: 5px;
-    border: solid 1px #ffffff61;
-    width:-webkit-fill-available;`;
+          padding: 9px;
+          color: white;
+          font-size: 10px;
+          border-radius: 5px;
+          border: ${con.style.border};
+          width:-webkit-fill-available;`;
+
   con.prefix = ">";
+  con.elmenets = [];
   con.body = document.createElement("div");
   con.input = document.createElement("input");
   con.input.addEventListener("focus", function () {
@@ -21,6 +25,25 @@
   con.inputPrefix.innerHTML = con.prefix;
   con.element = document.createElement("div");
   con.body.appendChild(con.element);
+
+  con.theme = function (name, data) {
+    switch (name) {
+      case "default":
+      case null:
+        con.body.style["font-family"] = "monospace";
+        con.body.style["background"] = "#252526";
+        con.body.style["padding"] = "10px";
+        con.body.style["color"] = "white";
+
+        con.input.style["background"] = "transparent";
+        con.input.style["border"] = "none";
+        con.inputPrefix.style["color"] = "skyblue";
+        con.input.style["margin-left"] = "10px";
+        con.input.style["color"] = "white";
+        break;
+    }
+  };
+  con.theme("default");
   con.json.col = function (type) {
     switch (type) {
       case "string":
@@ -70,6 +93,13 @@
       }
     );
   };
+  con.htmlify = function (json) {
+    var el = json;
+    json = JSON.stringify(json, ["id", "className", "tagName"]);
+    json = JSON.parse(json);
+    json.childrens = el.children.length;
+    return con.stringify(json);
+  };
   con.pre = function (msg) {
     var style = `border: solid 2px #343434;
     padding: 5px;
@@ -77,22 +107,7 @@
     background: #1b1b1b;`;
     return `<pre style="${style}">${msg ? msg : ""}</pre>`;
   };
-  con.theme = function (name, data) {
-    switch (name) {
-      case "default":
-        con.body.style["font-family"] = "monospace";
-        con.body.style["background"] = "#252526";
-        con.body.style["padding"] = "10px";
-        con.body.style["color"] = "white";
 
-        con.input.style["background"] = "transparent";
-        con.input.style["border"] = "none";
-        con.inputPrefix.style["color"] = "skyblue";
-        con.input.style["margin-left"] = "10px";
-        con.input.style["color"] = "white";
-        break;
-    }
-  };
   con.appendTo = function (el) {
     el.appendChild(con.body);
   };
@@ -102,6 +117,15 @@
   con.col = function (msg, col) {
     return `<span style="color:${col ? col : "white"};">${msg}</span>`;
   };
+  function isElement(o) {
+    return typeof HTMLElement === "object"
+      ? o instanceof HTMLElement //DOM2
+      : o &&
+          typeof o === "object" &&
+          o !== null &&
+          o.nodeType === 1 &&
+          typeof o.nodeName === "string";
+  }
   con.log = function (msg, conf) {
     var div = document.createElement("div");
     div.innerHTML = "";
@@ -110,6 +134,7 @@
     if (typeof msg === "string") div.innerHTML += msg ? msg : "";
     if (typeof msg === "object")
       div.innerHTML += con.pre(con.stringify(msg ? msg : ""));
+    if (isElement(msg)) div.innerHTML += con.pre(con.htmlify(msg ? msg : ""));
     con.element.appendChild(div);
   };
   con.err = function (msg, msg2, conf) {
@@ -144,6 +169,7 @@
     });
     con.element.appendChild(btn);
   };
+
   con.addInput = function (name, callback, to) {
     var div = document.createElement("div");
     var input = document.createElement("input");
@@ -154,6 +180,7 @@
     btn.style = con.style.button;
     btn.style.width = "auto";
     btn.style.marginLeft = "10px";
+    btn.style.marginTop = "5px";
     input.style = con.style.button;
     input.style.width = "auto";
     input.placeholder = "Input";
@@ -206,16 +233,112 @@
   con.others.sec = function (s) {
     return s * 1000;
   };
+  con.others.id = function (length = 9) {
+    return Math.random().toString(36).substr(2, length); //+'/'+ Math.random().toString(36).substr(2, length);
+  };
+  con.img = function (src) {
+    var el = document.createElement("img");
+    el.src = src;
+    el.draggable = false;
+    el.style = `height:200px;margin-top:10px;border-radius:5px;border:${con.style.border};`;
+    con.element.appendChild(el);
+    el.addEventListener("click", function () {
+      con.pop.open(src, "png");
+    });
+  };
+  con.canvas = function (canvas) {
+    canvas.style = `margin-top:10px;border-radius:5px;border: solid 1px #ffffff61;`;
+    canvas.style.display = "block";
+    canvas.style.height = "250px";
+    canvas.style.width = "250px";
+    canvas.style.marginTop = "5px";
+
+    con.element.appendChild(canvas);
+  };
+  con.remove = function (id) {
+    document.querySelector(`[con-id="${id}"]`).remove();
+  };
+  var oldAppend = con.element.appendChild;
+  con.frame = function (src) {
+    var div = document.createElement("div");
+    var el = document.createElement("iframe");
+    el["style"] = `border:none;
+    height:300px;width:500px;`;
+    el.src = src;
+    div.appendChild(el);
+    con.element.appendChild(div);
+  };
+  con.element.appendChild = function () {
+    var el = oldAppend.apply(this, arguments);
+    var id = con.others.id();
+    con.elmenets.push(el);
+    el.setAttribute("con-id", id);
+  };
   con.input.addEventListener("keypress", function (e) {
     if (e.keyCode === 13)
       try {
         var code = eval(this.value);
-        console.log(code);
+        con.log(code);
         this.value = "";
       } catch (e) {
         con.err(String(e));
         console.log(e);
       }
   });
+  con.pop = {};
+  con.pop.open = function (data, type) {
+    var body = document.createElement("div");
+    body.style = `
+    position:fixed;
+    top:0;
+    height:100%;
+    width:100%;
+    backdrop-filter:blur(10px);
+    z-index:100;`;
+    var pop = document.createElement("div");
+    pop.style = `position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);`;
+    var close = document.createElement("div");
+    close.innerHTML = "X";
+    close.style = `position:absolute;
+    right:0;
+    top:0;
+    font-family:monospace;
+    color:white;
+    margin:10px;
+    `;
+    body.appendChild(pop);
+    body.appendChild(close);
+    document.body.appendChild(body);
+    close.addEventListener("click", function () {
+      body.remove();
+    });
+    switch (type) {
+      case "png":
+        var img = document.createElement("img");
+        img.src = data;
+        img.style = `height:500px;width:500px;`;
+        pop.appendChild(img);
+        break;
+
+      case "canvas":
+        var div = document.createElement("div");
+        div.style = `height:500px;width:500px;`;
+        div.appendChild(data);
+        pop.appendChild(div);
+        break;
+
+      case "string":
+        var div = document.createElement("div");
+        div.style = `height:500px;width:500px;
+       background:#ffffff61;text-align:center;
+       font-family:monospace;padding:10px;`;
+        div.innerHTML = data;
+        pop.appendChild(div);
+        break;
+    }
+  };
   return con;
 })();
